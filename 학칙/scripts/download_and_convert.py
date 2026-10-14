@@ -20,9 +20,11 @@ import fitz  # PyMuPDF
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-ROOT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = Path(__file__).resolve().parents[2]
 PDFS_TXT = ROOT_DIR / "pdfs.txt"
 HAKCHIK_DIR = ROOT_DIR / "학칙"
+PDF_DIR = HAKCHIK_DIR / "pdf"
+MD_DIR = HAKCHIK_DIR / "md"
 
 CIRCLE_MAP = {
     '①': '(1)', '②': '(2)', '③': '(3)', '④': '(4)', '⑤': '(5)',
@@ -345,14 +347,15 @@ def convert_pdf_to_md(pdf_path: Path, md_path: Path):
     out_content = "\n".join(cleaned).strip() + "\n"
     md_path.write_text(out_content, encoding='utf-8')
 
-def convert_all(target_dir: Path):
-    pdf_files = sorted(target_dir.glob("*.pdf"))
-    print(f"=== Starting PDF -> MD Conversion ({len(pdf_files)} files) in '{target_dir.name}' ===")
+def convert_all(pdf_dir: Path, md_dir: Path):
+    md_dir.mkdir(parents=True, exist_ok=True)
+    pdf_files = sorted(pdf_dir.glob("*.pdf"))
+    print(f"=== Starting PDF -> MD Conversion ({len(pdf_files)} files) from '{pdf_dir.name}' to '{md_dir.name}' ===")
     converted = 0
     errors = 0
     for idx, pdf_path in enumerate(pdf_files, 1):
         md_name = unicodedata.normalize('NFC', pdf_path.stem) + ".md"
-        md_path = target_dir / md_name
+        md_path = md_dir / md_name
         try:
             convert_pdf_to_md(pdf_path, md_path)
             converted += 1
@@ -372,10 +375,10 @@ def main():
     args = parser.parse_args()
 
     if not args.convert_only:
-        download_all(PDFS_TXT, HAKCHIK_DIR, max_workers=args.workers)
+        download_all(PDFS_TXT, PDF_DIR, max_workers=args.workers)
 
     if not args.download_only:
-        convert_all(HAKCHIK_DIR)
+        convert_all(PDF_DIR, MD_DIR)
 
 if __name__ == "__main__":
     main()
